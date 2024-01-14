@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from langchain.chains.question_answering import load_qa_chain
 from langchain.llms import OpenAI
 from langchain.chains import RetrievalQA
+import click
 # load from env file the api key
 load_dotenv()
 
@@ -26,19 +27,20 @@ PINECONE_ENVIRONMENT = os.environ["PINECONE_ENVIRONMENT"]
 INDEX_NAME = "documentation-chat"
 
 
+@click.group()
+def cli():
+    pass
+
+
 def simple_extractor(html: str) -> str:
     soup = BeautifulSoup(html, "lxml")
     # Documentation is contained within articles, all html elements outside it are noise we filter out.
     body = soup.find("article")
-    # Could be useful to split it by headers section so the source would point to the actual part of the documentation.
-    headers_to_split_on = [
-        ("h1", "Header 1"),
-    ]
-
     # Extra lines might not matter for some embedding algorithms, but shouldn't hurt either.
     return re.sub(r"\n\n+", "\n\n", body.text).strip()
 
 
+@cli.command("update")
 def update_docs_database():
     docs_from_documentation = RecursiveUrlLoader(
         url="https://ibm.github.io/ibm-generative-ai/",
@@ -99,17 +101,24 @@ def process_llm_response(llm_response):
         print(source.metadata['source'])
 
 
-pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
+@cli.command()
+def test_query():
+    pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
 
-# Reconnect to the index by name
-index = pinecone.Index(INDEX_NAME)
-embeddings = OpenAIEmbeddings()
+    # Reconnect to the index by name
+    index = pinecone.Index(INDEX_NAME)
+    embeddings = OpenAIEmbeddings()
 
-# Create a vector store object
-vectorstore = Pinecone(index, embeddings.embed_query, "text")
-llm = OpenAI(temperature=0)
-query = "How would I use the system to explain my code?"
-retriever = vectorstore.as_retriever()
-qa_chain = RetrievalQA.from_chain_type(llm, chain_type="stuff", retriever=retriever,  return_source_documents=True)
-answer = qa_chain(query)
-process_llm_response(answer)
+    # Create a vector store object
+    vectorstore = Pinecone(index, embeddings.embed_query, "text")
+    llm = OpenAI(temperature=0)
+    query = "How would I use the system to explain my code?"
+    retriever = vectorstore.as_retriever()
+    qa_chain = RetrievalQA.from_chain_type(llm, chain_type="stuff", retriever=retriever,  return_source_documents=True)
+    answer = qa_chain(query)
+    process_llm_response(answer)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    cli()
