@@ -42,6 +42,22 @@ def simple_extractor(html: str) -> str:
 
 @cli.command("update")
 def update_docs_database():
+    """
+    Scrapes the online documentation, extracts the relevant information, splits it into reasonable sized documents
+    and saves it to a vector database. I used Langchain, Pinecone and OpenAI embeddings, but few line changes
+    can make it work with any vector database or embeddings. Took some shameless inspiration
+    from https://github.com/langchain-ai/chat-langchain/tree/master
+    TODO: things/ ideas to improve this in the future:
+    1: The splitting of documents is done just based on chunk sizes. Could be improved by using header sections and
+       incorporating the header links for better sourcing of the data. I don't think RecursiveUrlLoader can be used for
+       this, needs to be more manually processed with BF4, maybe some help can be gained from HTMLHeaderTextSplitter.
+    2: Currently there is no checking if the documentation has changed, I think git actions that would fire when the
+       documentation folder is committed into could rerun this method. Could also hash the pages and compare hashes,
+       update only modified documentation by checking metadata of the vectors and updating those.
+    3: I'm not really a fan of the forced async Pinecone.from_documents upserting and not getting a feedback if it's
+       succeeded fully, feels like it could silently fail but I might be wrong here. For peace of mind might want to
+       change it later to upserting through index.
+    """
     docs_from_documentation = RecursiveUrlLoader(
         url="https://ibm.github.io/ibm-generative-ai/",
         max_depth=8,
@@ -86,14 +102,13 @@ def update_docs_database():
     logger.info(f"Pinecode index created with the following stats: {index.describe_index_stats()} ")
     logger.info("Upserting documents")
     try:
-         doc_search = Pinecone.from_documents(docs_transformed, embeddings, index_name=INDEX_NAME)
+        Pinecone.from_documents(docs_transformed, embeddings, index_name=INDEX_NAME)
     except Exception as e:
         # Might change to index.upsert if it proves unstable.
         print(f"Upsert operation failed: {e}")
     logger.info(f"Documents are being uploaded to the Pinecone database")
 
 
-## Cite sources
 def process_llm_response(llm_response):
     print(llm_response['result'])
     print('\n\nSources:')
@@ -103,6 +118,7 @@ def process_llm_response(llm_response):
 
 @cli.command()
 def test_query():
+    """ Here just to test quickly very basic question to see if the documentation is there."""
     pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
 
     # Reconnect to the index by name
