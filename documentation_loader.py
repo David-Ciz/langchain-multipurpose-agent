@@ -118,7 +118,7 @@ def process_llm_response(llm_response):
 
 @cli.command()
 def test_query():
-    """ Here just to test quickly very basic question to see if the documentation is there."""
+    """ A quick test on a very basic question to see if the documentation is there."""
     pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
 
     # Reconnect to the index by name
