@@ -1,3 +1,4 @@
+import logging
 import os
 
 from langchain.memory import ConversationBufferMemory
@@ -13,6 +14,7 @@ from langchain.callbacks import StdOutCallbackHandler
 from langchain_core.callbacks import BaseCallbackHandler
 
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
 PINECONE_ENVIRONMENT = os.environ["PINECONE_ENVIRONMENT"]
@@ -54,10 +56,13 @@ msgs = StreamlitChatMessageHistory(key="special_app_key")
 memory = ConversationBufferMemory(memory_key="chat_history", chat_memory=msgs, output_key='answer')
 if len(msgs.messages) == 0:
     msgs.add_ai_message("How can I help you?")
-
-vectorstore = Pinecone.from_existing_index(INDEX_NAME, OpenAIEmbeddings())
-retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 3})
-
+try:
+    vectorstore = Pinecone.from_existing_index(INDEX_NAME, OpenAIEmbeddings())
+    retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+except Exception as e:
+    logger.error(f"An error occurred while connecting to Pinecone: {e}")
+else:
+    logger.info("Successfully connected to Pinecone")
 for msg in msgs.messages:
     st.chat_message(msg.type).write(msg.content)
 
@@ -82,11 +87,15 @@ if prompt := st.chat_input():
                                                                chain_type_kwargs=chain_type_kwargs)
         full_response = ""
     # doesn't work with the callback , callbacks=[handler]
-        for response in qa_chain.stream({"question": prompt}):
-            #full_response += (response['answer'] or "")
-            #chat_box.markdown(full_response + "▌")
-        #chat_box.markdown(full_response)
-    # #response = qa_chain.call(question=prompt, human_input=prompt)
-            processed_response = process_llm_response(response)
-            chat_box.write(processed_response)
+        try:
+            for response in qa_chain.stream({"question": prompt}):
+                #full_response += (response['answer'] or "")
+                #chat_box.markdown(full_response + "▌")
+            #chat_box.markdown(full_response)
+        # #response = qa_chain.call(question=prompt, human_input=prompt)
+                processed_response = process_llm_response(response)
+                chat_box.write(processed_response)
+        except Exception as e:
+            logger.error(f"An error occurred while generating answer: {e}")
+            chat_box.write("Something went wrong, please try rerunning the program and look at logger errors")
     # #answer = response['answer']
