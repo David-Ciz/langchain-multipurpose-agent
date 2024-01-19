@@ -18,10 +18,12 @@ $ pip install -r requirements.txt
 ## Running
 # 1. create a .env file
 We store enviromental variables in .env file located in a root directory. create this file with the following structure:
+```
 OPENAI_API_KEY=[YOUR_OPENAI_API_KEY]
 PINECONE_API_KEY=[YOUR_PINECONE_API_KEY]
 PINECONE_ENVIRONMENT=[YOUR_PINECONE_ENVIRONMENT_NAME]
 INDEX_NAME = [YOUR_PINECONE_INDEX_NAME]
+```
 If you do not have these API keys, go to https://www.pinecone.io/ and https://platform.openai.com and obtain them (better instructions later)
 # 2. Fill database
 ```shell
