@@ -15,8 +15,8 @@ from utils import StreamHandler, process_source_metadata
 
 logger = logging.getLogger(__name__)
 
-# Could be made with classes, But I'm still not losing hope I can combine them in some clever way.
-
+# Could be made with classes, But I'm still not losing hope I can combine them in some clever way and they have different parameter amounts anyway, this is more readable for now.
+# ------------------DOCUMENTATION AGENT --------------------
 
 def initiate_documentation_agent(INDEX_NAME, chat_box, memory):
     # vector store initiation for the database qa with sources
@@ -37,7 +37,6 @@ def initiate_documentation_agent(INDEX_NAME, chat_box, memory):
     Human: {question}
     AI: """
     prompt_template = PromptTemplate(input_variables=["summaries", "question"], template=template)
-    # Add the memory to an LLMChain as usual
     llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.2, streaming=True, callbacks=[stream_handler])
     chain_type_kwargs = {"prompt": prompt_template}
     # TODO: check the summaries, I don't think they are working correctly right now.
@@ -51,6 +50,8 @@ def get_documentation_qa_response(executor, chat_box, prompt):
     for response in executor.stream({"question": prompt}):
         processed_response = process_source_metadata(response)
         chat_box.write(processed_response)
+
+# ------------------TOOL AGENT --------------------
 
 
 def initiate_tools_agent(memory):
