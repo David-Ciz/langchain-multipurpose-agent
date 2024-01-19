@@ -52,8 +52,7 @@ def update_docs_database():
        incorporating the header links for better sourcing of the data. I don't think RecursiveUrlLoader can be used for
        this, needs to be more manually processed with BF4, maybe some help can be gained from HTMLHeaderTextSplitter.
     2: Currently there is no checking if the documentation has changed, I think git actions that would fire when the
-       documentation folder is committed into could rerun this method. Could also hash the pages and compare hashes,
-       update only modified documentation by checking metadata of the vectors and updating those.
+       documentation folder is committed into could rerun this method.
     3: I'm not really a fan of the forced async Pinecone.from_documents upserting and not getting a feedback if it's
        succeeded fully, feels like it could silently fail but I might be wrong here. For peace of mind might want to
        change it later to upserting through index.
