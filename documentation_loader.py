@@ -1,15 +1,17 @@
 import os
 import time
+
+import pinecone.grpc
 from langchain_community.document_loaders import RecursiveUrlLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 from langchain.utils.html import (PREFIXES_TO_IGNORE_REGEX,
                                   SUFFIXES_TO_IGNORE_REGEX)
-from langchain_community.vectorstores import Pinecone
+from langchain_community.vectorstores import Pinecone as PineconeLangchain
 from bs4 import BeautifulSoup
 import logging
 import re
-import pinecone
+from pinecone import Pinecone, PodSpec
 from langchain_openai import OpenAIEmbeddings
 from dotenv import load_dotenv
 from langchain_openai import OpenAI
@@ -23,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
 PINECONE_ENVIRONMENT = os.environ["PINECONE_ENVIRONMENT"]
-INDEX_NAME = "documentation-chat"
+INDEX_NAME = os.environ["INDEX_NAME"]
 
 
 @click.group()
@@ -56,6 +58,7 @@ def update_docs_database():
        succeeded fully, feels like it could silently fail but I might be wrong here. For peace of mind might want to
        change it later to upserting through index.
     """
+    logger.info(f"Recursively loading docs from https://ibm.github.io/ibm-generative-ai/")
     docs_from_documentation = RecursiveUrlLoader(
         url="https://ibm.github.io/ibm-generative-ai/",
         max_depth=8,
@@ -79,28 +82,33 @@ def update_docs_database():
     logger.info(f"Split into {len(docs_transformed)} chunks from docs")
     # Uses "text-embedding-ada-002". Might exchange for something more powerful/cheaper/faster if needed
     embeddings = OpenAIEmbeddings()
-    pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
+    pc = Pinecone()
+    #pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
     # delete index if exists
-    if INDEX_NAME in pinecone.list_indexes():
-        pinecone.delete_index(INDEX_NAME)
+    # TODO: in new pinecone version this is getting ignored, needs to be fixed. Has to be done in pinecone console
+    if INDEX_NAME in pc.list_indexes():
+        pc.delete_index(INDEX_NAME)
 
     # create new index
     logger.info("Creating new Pinecone index")
-    pinecone.create_index(
+    pc.create_index(
         name=INDEX_NAME,
         metric='cosine',
-        dimension=1536  # 1536 dim of text-embedding-ada-002
+        dimension=1536,  # 1536 dim of text-embedding-ada-002
+        spec=PodSpec(
+            environment="gcp-starter",
+            pod_type="p1.x1"
+        )
     )
 
     # wait for index to be initialized
-    while not pinecone.describe_index(INDEX_NAME).status['ready']:
+    while not pc.describe_index(INDEX_NAME).status['ready']:
         time.sleep(1)
 
-    index = pinecone.GRPCIndex(INDEX_NAME)
-    logger.info(f"Pinecode index created with the following stats: {index.describe_index_stats()} ")
+    logger.info(f"Pinecode index created with the following stats: {pc.describe_index()} ")
     logger.info("Upserting documents")
     try:
-        Pinecone.from_documents(docs_transformed, embeddings, index_name=INDEX_NAME)
+        PineconeLangchain.from_documents(docs_transformed, embeddings, index_name=INDEX_NAME)
     except Exception as e:
         # Might change to index.upsert if it proves unstable.
         print(f"Upsert operation failed: {e}")
@@ -118,7 +126,7 @@ def process_llm_response(llm_response):
 def test_query():
     """ A quick test on a very basic question to see if the documentation is there."""
     # Create a vector store object
-    vectorstore = Pinecone.from_existing_index(INDEX_NAME, OpenAIEmbeddings())
+    vectorstore = PineconeLangchain.from_existing_index(INDEX_NAME, OpenAIEmbeddings())
     llm = OpenAI(temperature=0)
     query = "How would I use the system to explain my code?"
     retriever = vectorstore.as_retriever()

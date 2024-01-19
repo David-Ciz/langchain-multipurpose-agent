@@ -1,9 +1,9 @@
-pinecone-client
-tiktoken
+pinecone-client~=3.0.1
+tiktoken=0.5.2
 pydantic~=2.5.3
 httpx~=0.26.0
 tqdm~=4.66.1
-langchain
+langchain=0.1.1
 uvicorn~=0.25.0
 fastapi~=0.108.0
 starlette~=0.32.0.post1
@@ -11,7 +11,8 @@ requests~=2.31.0
 pyyaml~=6.0.1
 python-dotenv~=1.0.0
 beautifulsoup4~=4.12.2
-duckduckgo-search
-langchain-experimental
-langchain-openai
-streamlit
+duckduckgo-search=4.2
+langchain-experimental=0.0.49
+langchain-openai=0.0.3
+streamlit=1.30.0
+pinecone-client[grpc]
