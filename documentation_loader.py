@@ -1,19 +1,18 @@
 import os
 import time
-from langchain.document_loaders import RecursiveUrlLoader
+from langchain_community.document_loaders import RecursiveUrlLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 from langchain.utils.html import (PREFIXES_TO_IGNORE_REGEX,
                                   SUFFIXES_TO_IGNORE_REGEX)
-from langchain.vectorstores import Pinecone
+from langchain_community.vectorstores import Pinecone
 from bs4 import BeautifulSoup
 import logging
 import re
 import pinecone
-from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from dotenv import load_dotenv
-from langchain.chains.question_answering import load_qa_chain
-from langchain.llms import OpenAI
+from langchain_openai import OpenAI
 from langchain.chains import RetrievalQA
 import click
 # load from env file the api key
@@ -118,14 +117,8 @@ def process_llm_response(llm_response):
 @cli.command()
 def test_query():
     """ A quick test on a very basic question to see if the documentation is there."""
-    pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
-
-    # Reconnect to the index by name
-    index = pinecone.Index(INDEX_NAME)
-    embeddings = OpenAIEmbeddings()
-
     # Create a vector store object
-    vectorstore = Pinecone(index, embeddings.embed_query, "text")
+    vectorstore = Pinecone.from_existing_index(INDEX_NAME, OpenAIEmbeddings())
     llm = OpenAI(temperature=0)
     query = "How would I use the system to explain my code?"
     retriever = vectorstore.as_retriever()

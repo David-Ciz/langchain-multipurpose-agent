@@ -1,0 +1,17 @@
+pinecone-client
+tiktoken
+pydantic~=2.5.3
+httpx~=0.26.0
+tqdm~=4.66.1
+langchain
+uvicorn~=0.25.0
+fastapi~=0.108.0
+starlette~=0.32.0.post1
+requests~=2.31.0
+pyyaml~=6.0.1
+python-dotenv~=1.0.0
+beautifulsoup4~=4.12.2
+duckduckgo-search
+langchain-experimental
+langchain-openai
+streamlit
