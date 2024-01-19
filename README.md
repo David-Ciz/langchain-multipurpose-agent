@@ -2,7 +2,7 @@
 This repository contains a solution to the python ai-challenge.
 ## what you will find in this repository
 This repository contains an application, a chat bot, that can answer questions from a documentation, with memory,
-ability to handle large conversations and providing sources. As a bonus, there is a secondary agent that can search the web
+ability to handle large conversations and providing sources and streaming the answers. As a bonus, there is a secondary agent that can search the web
 and execute python code. Other features to be implemented soon!
 
 ## Setup
