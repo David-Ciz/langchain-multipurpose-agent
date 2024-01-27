@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 # Could be made with classes, But I'm still not losing hope I can combine them in some clever way and they have different parameter amounts anyway, this is more readable for now.
 # ------------------DOCUMENTATION AGENT --------------------
 
+
 def initiate_documentation_agent(INDEX_NAME, chat_box, memory):
     # vector store initiation for the database qa with sources
     try:
