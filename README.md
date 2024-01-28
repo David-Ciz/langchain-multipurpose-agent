@@ -1,5 +1,6 @@
 # ai-challenge solution
 This repository contains an application that serves to show my abilites for the python ai-challenge.
+<meta> For why things are the way they are, I left good amount of meta comments and you can also read the thoughts.txt to get more insight on the code structure. </meta>
 ## what you will find in this repository
 This repository contains an application, a chat bot, with memory,
 ability to handle large conversations and providing sources and streaming the answers. It has access to tools that can search the web, answer questions from a documentation and execute python code. 
@@ -58,10 +59,12 @@ $ python api_interface.py
 To easily test the api, use 'quick_api_tests.py'
 
 # 5. Planned features
-- Better documentation extraction based on section headers
+- Better documentation extraction based on section headers and filtering out small documents
 - adding the other  GenAI Node.js SDK documentation that I totally didn't miss in the instructions
-- better document extraction with advanced techniques like reranking and better summarization
+- better document extraction with advanced techniques to better summarize 
 - better memory management with better chat history summarization
 - answering questions from pdf/csv file
+- other llms support
+- more databases support
 - dockerization
 - and more
