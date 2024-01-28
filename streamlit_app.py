@@ -13,6 +13,7 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from agents.orchestrator_agent import OrchestratorAgent
 from agents.output_parsers.parsers import parse_agent_messages
 from agents.vectorstore_agent import VectorStoreAgent
+from styles import css
 from utils import env_variables_checker
 
 # env setup, make sure you have a .env file under root with
@@ -29,18 +30,12 @@ if missing_variables:
 logger = logging.getLogger(__name__)
 INDEX_NAME = os.environ["INDEX_NAME"]
 
-# with st.sidebar:
-#     # Since the database search doesn't play nice with the other tools, I seperate it into two.
-#     agent_type = st.radio("select tools", ["database_search_agent", "tool_agent"])
-#     if agent_type == "tool_agent":
-#         uploaded_file = st.file_uploader("You can upload files! (didn't make the csv tool in time though :( )")
-#         st.markdown(css, unsafe_allow_html=True)
-#         # each agent has different memory output key
-#         memory_output_key = "output"
-#         welcome_ai_message = "I can search internet for you and execute python code!"
-#     else:
-#         memory_output_key = "answer"
-#         welcome_ai_message = "I can search documentation and give you sources!"
+with st.sidebar:
+    # Since the database search doesn't play nice with the other tools, I seperate it into two.
+    agent_type = st.radio("select tools", ["database_search_agent", "tool_agent"])
+    if agent_type == "tool_agent":
+        uploaded_file = st.file_uploader("You can upload files! (didn't make the csv tool in time though :( )")
+        st.markdown(css, unsafe_allow_html=True)
 
 welcome_ai_message = " Hello, I'm a helpful assistant that can answer questions from the documentation. " \
                      "I can search internet for you and execute python code!"

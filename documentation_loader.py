@@ -16,6 +16,9 @@ from dotenv import load_dotenv
 from langchain_openai import OpenAI
 from langchain.chains import RetrievalQA
 import click
+
+from agents.output_parsers.parsers import process_source_metadata
+
 # load from env file the api key
 load_dotenv()
 
@@ -33,6 +36,8 @@ def cli():
 
 
 def simple_extractor(html: str) -> str:
+    # TODO: Just noticed that there are big amount of almost empty pages, if I were to filter len(body)< 80,
+    #  return None, That would get rid of them. Won't push it to prod an hour before deadline though.
     soup = BeautifulSoup(html, "lxml")
     # Documentation is contained within articles, all html elements outside it are noise we filter out.
     body = soup.find("article")
@@ -41,7 +46,9 @@ def simple_extractor(html: str) -> str:
 
 
 @cli.command("update")
-def update_docs_database():
+@click.option("--url", type=bool, default="https://ibm.github.io/ibm-generative-ai/",
+              help="Url to try and recursively add to the pinecone database")
+def update_docs_database(url: str = "https://ibm.github.io/ibm-generative-ai/"):
     """
     Scrapes the online documentation, extracts the relevant information, splits it into reasonable sized documents
     and saves it to a vector database. I used Langchain, Pinecone and OpenAI embeddings, but few line changes
@@ -57,9 +64,9 @@ def update_docs_database():
        succeeded fully, feels like it could silently fail but I might be wrong here. For peace of mind might want to
        change it later to upserting through index.
     """
-    logger.info(f"Recursively loading docs from https://ibm.github.io/ibm-generative-ai/")
+    logger.info(f"Recursively loading docs from f{url}")
     docs_from_documentation = RecursiveUrlLoader(
-        url="https://ibm.github.io/ibm-generative-ai/",
+        url=url,
         max_depth=8,
         extractor=simple_extractor,
         prevent_outside=True,
@@ -82,7 +89,6 @@ def update_docs_database():
     # Uses "text-embedding-ada-002". Might exchange for something more powerful/cheaper/faster if needed
     embeddings = OpenAIEmbeddings()
     pc = Pinecone()
-    #pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
     # delete index if exists
     # TODO: in new pinecone version this is getting ignored, needs to be fixed. Has to be done in pinecone console
     if INDEX_NAME in pc.list_indexes():
@@ -114,13 +120,6 @@ def update_docs_database():
     logger.info(f"Documents are being uploaded to the Pinecone database")
 
 
-def process_llm_response(llm_response):
-    print(llm_response['result'])
-    print('\n\nSources:')
-    for source in llm_response["source_documents"]:
-        print(source.metadata['source'])
-
-
 @cli.command()
 def test_query():
     """ A quick test on a very basic question to see if the documentation is there."""
@@ -129,9 +128,9 @@ def test_query():
     llm = OpenAI(temperature=0)
     query = "How would I use the system to explain my code?"
     retriever = vectorstore.as_retriever()
-    qa_chain = RetrievalQA.from_chain_type(llm, chain_type="stuff", retriever=retriever,  return_source_documents=True)
+    qa_chain = RetrievalQA.from_chain_type(llm, chain_type="stuff", retriever=retriever, return_source_documents=True)
     answer = qa_chain(query)
-    process_llm_response(answer)
+    print(process_source_metadata(answer))
 
 
 if __name__ == "__main__":
