@@ -1,9 +1,9 @@
 # ai-challenge solution
-This repository contains a solution to the python ai-challenge.
+This repository contains an application that serves to show my abilites for the python ai-challenge.
 ## what you will find in this repository
-This repository contains an application, a chat bot, that can answer questions from a documentation, with memory,
-ability to handle large conversations and providing sources and streaming the answers. As a bonus, there is a secondary agent that can search the web
-and execute python code. Other features to be implemented soon!
+This repository contains an application, a chat bot, with memory,
+ability to handle large conversations and providing sources and streaming the answers. It has access to tools that can search the web, answer questions from a documentation and execute python code. 
+Other features to be implemented soon!
 
 ## Setup
 in your preffered virtual environment use pip to install required packages from requirements.txt
@@ -24,7 +24,7 @@ PINECONE_API_KEY=[YOUR_PINECONE_API_KEY]
 PINECONE_ENVIRONMENT=[YOUR_PINECONE_ENVIRONMENT_NAME]
 INDEX_NAME = [YOUR_PINECONE_INDEX_NAME]
 ```
-If you do not have these API keys, go to https://www.pinecone.io/ and https://platform.openai.com and obtain them (better instructions later)
+If you do not have these API keys, go to https://www.pinecone.io/ and https://platform.openai.com and obtain them (better instructions later if needed)
 # 2. Fill database
 ```shell
 $ python documentation_loader.py update 
@@ -34,26 +34,34 @@ You can quickly test the functionality through the test-query method, that asks 
 ```shell
 $ python documentation_loader.py test-query
 ```
-
-# 3. Run the app
-The app is created using streamlit, after running the following command a browser window should open with the app
+# 3 Running the app
+We provide 3 options of interacting with the application, with main focus on streamlit frontend.
+## 3.1 Run the app using streamlit
+After running the following command a browser window should open with the app
 ```shell
 $ streamlit run streamlit_app.py
 ```
+The chat interface is mostly self-explanatory. After the first message a button appears for resetting the agent memory. 
+Upload of the file while there, currently doesn't do much without the csv or pdf tool.
 
-# 4. Using the app
-The chat interface is mostly self-explanatory, the important thing is the left panel, where you switch between the two agents.
-The agents do share memory, which can be beneficial, but it also introduces instability and unexpected formatting. 
-It is recommended to clear the memory when switching between the agents.
+## 3.2 Run the app using cli
+To use the cli interface, use the following command.
+```shell
+$ python cli_interface.py
+```
 
+## 3.3 Run the app using api
+We also provide rudimetary api interface to interact with the agent. To start the server use:
+```shell
+$ python api_interface.py
+```
+To easily test the api, use 'quick_api_tests.py'
 
 # 5. Planned features
 - Better documentation extraction based on section headers
 - adding the other  GenAI Node.js SDK documentation that I totally didn't miss in the instructions
 - better document extraction with advanced techniques like reranking and better summarization
 - better memory management with better chat history summarization
-- cli/api interface
 - answering questions from pdf/csv file
 - dockerization
-- type hints! I just rewrote stuff so much I didn't bother
 - and more
