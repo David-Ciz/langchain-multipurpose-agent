@@ -68,3 +68,7 @@ class OrchestratorAgent:
             cfg["callbacks"] = [handler]
             self.executor.invoke({"input": prompt, "chat_history": []}, cfg)
         # there shouldn't be a need to return anything, since the result gets streamed straight to cli.
+
+    def get_api_response(self, prompt: str):
+        result = self.executor.invoke({"input": prompt, "chat_history": []})
+        return result
