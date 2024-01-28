@@ -55,27 +55,27 @@ def get_documentation_qa_response(executor, chat_box, prompt):
 # ------------------TOOL AGENT --------------------
 
 
-def initiate_tools_agent(memory):
-    tools = [DuckDuckGoSearchRun(name="Search"),
-             PythonREPLTool()]
-    # TODO: streaming callback is just ugly for the agent, would have to parse it for the final_output,
-    #  no time unfortunately so 'streaming' is just for the inbetween steps
-    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.2, streaming=True)
-    chat_agent = ConversationalChatAgent.from_llm_and_tools(llm=llm, tools=tools)
-    executor = AgentExecutor.from_agent_and_tools(
-        agent=chat_agent,
-        tools=tools,
-        memory=memory,
-        return_intermediate_steps=True,
-        handle_parsing_errors=True,
-    )
-    return executor
-
-
-def get_tools_response(executor, container, msgs, prompt):
-    st_cb = StreamlitCallbackHandler(container, expand_new_thoughts=False)
-    cfg = RunnableConfig()
-    cfg["callbacks"] = [st_cb]
-    response = executor.invoke(prompt, cfg)
-    st.session_state.steps[str(len(msgs.messages) - 1)] = response["intermediate_steps"]
-    st.write(response["output"])
+# def initiate_tools_agent(memory):
+#     tools = [DuckDuckGoSearchRun(name="Search"),
+#              PythonREPLTool()]
+#     # TODO: streaming callback is just ugly for the agent, would have to parse it for the final_output,
+#     #  no time unfortunately so 'streaming' is just for the inbetween steps
+#     llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.2, streaming=True)
+#     chat_agent = ConversationalChatAgent.from_llm_and_tools(llm=llm, tools=tools)
+#     executor = AgentExecutor.from_agent_and_tools(
+#         agent=chat_agent,
+#         tools=tools,
+#         memory=memory,
+#         return_intermediate_steps=True,
+#         handle_parsing_errors=True,
+#     )
+#     return executor
+#
+#
+# def get_tools_response(executor, container, msgs, prompt):
+#     st_cb = StreamlitCallbackHandler(container, expand_new_thoughts=False)
+#     cfg = RunnableConfig()
+#     cfg["callbacks"] = [st_cb]
+#     response = executor.invoke(prompt, cfg)
+#     st.session_state.steps[str(len(msgs.messages) - 1)] = response["intermediate_steps"]
+#     st.write(response["output"])

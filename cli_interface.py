@@ -2,21 +2,26 @@ import logging
 import os
 
 import click
+from langchain.memory import ConversationBufferMemory
+from langchain_community.vectorstores.pinecone import Pinecone
+from langchain_experimental.tools import PythonREPLTool
+
+from agents.orchestrator_agent import OrchestratorAgent
+from agents.vectorstore_agent import VectorStoreAgent
+from documentation_loader import update_docs_database
+from langchain_community.tools.ddg_search import DuckDuckGoSearchRun
+from langchain_openai import ChatOpenAI,  OpenAIEmbeddings
 from dotenv import load_dotenv
 
-from documentation_loader import update_docs_database
-from langchain.callbacks.streaming_stdout_final_only import FinalStreamingStdOutCallbackHandler
-from langchain import hub
-from langchain.agents import initialize_agent, create_react_agent, AgentExecutor
-from langchain.agents.agent_types import AgentType
-from langchain_community.tools.ddg_search import DuckDuckGoSearchRun
-from langchain_core.tools import Tool
-from langchain_experimental.agents.agent_toolkits import create_csv_agent
-from langchain_openai import ChatOpenAI, OpenAI
-from dotenv import load_dotenv
+from utils import env_variables_checker
+
 load_dotenv()
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("Assistant")
 INDEX_NAME = os.environ["INDEX_NAME"]
+
+missing_variables = env_variables_checker()
+if missing_variables:
+    logging.warning(f'warning, you are missing the following env. variables: {missing_variables}')
 
 
 @click.group()
@@ -39,64 +44,33 @@ def update_docs_database_cli(documentation_url: str):
 @click.option("--verbose", type=bool, default="False", help="Verbosity of chain of though")
 def start_chat_cli(verbose: bool):
     """
-    Starts an interactive chat with the agent in the terminal.
+    Starts an interactive chat with the agent in the terminal. To exit the chat, type "exit".
     """
 
-    csv_agent = create_csv_agent(
-        OpenAI(temperature=0),
-        "titanic_modified.csv",
-        verbose=verbose,
-        agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-    )
+    welcome_ai_message = " Hello, I'm a cli helpful assistant that can answer questions from the documentation. " \
+                         "I can search internet for you and execute python code!"
 
-    web_search = DuckDuckGoSearchRun(name="Search")
+    vectorstore = Pinecone.from_existing_index(INDEX_NAME, OpenAIEmbeddings())
+    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.2, streaming=True)
+    documentation_agent = VectorStoreAgent(llm=llm, vectorstore=vectorstore)
+    # memory setup with resetting button.
+    memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True,
+                                      output_key="output")
 
-    tools = [web_search,
-             Tool(
-                 name="titanic csv information",
-                 func=csv_agent.run,
-                 description=f"""
-                Useful for when you need to answer questions about titanic data stored in pandas dataframe 'df'. 
-                Runs python pandas operations on 'df' to help you get the right answer.         
-                """
-             ),
-             ]
-    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, streaming=True)
+    tools = [DuckDuckGoSearchRun(name="Search"), PythonREPLTool(), documentation_agent.as_tool()]
+    orchestrator_agent = OrchestratorAgent(tools, llm, memory, return_intermediate_steps=verbose)
 
-    prompt = hub.pull("hwchase17/react")
-
-    agent = create_react_agent(llm, tools, prompt)
-    agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=verbose, handle_parsing_errors=True, callbacks=[FinalStreamingStdOutCallbackHandler()])
-
-    # TODO: explore this:
-    # /home/david/anaconda3/envs/langchain/lib/python3.12/site-packages/langchain/agents/mrkl/base.py
-
-    # agent.run("how many rows are there?")
+    print(welcome_ai_message)
     while True:
+        print("\n Continue by writing your question or request below, type 'exit' to quit and 'reset' to reset the "
+              "memory")
         user_input = input()
         if user_input == "exit":
             break
+        elif user_input == "reset":
+            memory.clear()
         else:
-            if verbose:
-                agent_executor.invoke({"input": f"{user_input}"})
-            else:
-                result = agent_executor.invoke({"input": f"{user_input}"})
-                print(result["output"])
-
-# TODO: can't make it in time, the cli would need to call methods that are not bound to streamlit but fairly easy to add. Same for the api, just add fastapi decoration to the methods @app.post("/prompt")
-# @cli.command()
-# def call_documentation_qa_agent(prompt):
-#     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, chat_memory=msgs,
-#                                       output_key=memory_output_key)
-#     executor = initiate_documentation_agent(INDEX_NAME, chat_box, memory)
-#     get_documentation_qa_response(executor, chat_box, prompt)
-#
-# cli.command()
-# def call_tools_agent(prompt):
-#     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, chat_memory=msgs,
-#                                       output_key=memory_output_key)
-#     executor = initiate_documentation_agent(INDEX_NAME, chat_box, memory)
-#     get_documentation_qa_response(executor, chat_box, prompt)
+            orchestrator_agent.get_cli_response(user_input, verbose=verbose)
 
 
 if __name__ == "__main__":

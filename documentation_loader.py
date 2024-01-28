@@ -1,7 +1,6 @@
 import os
 import time
 
-import pinecone.grpc
 from langchain_community.document_loaders import RecursiveUrlLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
