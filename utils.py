@@ -2,7 +2,7 @@ from abc import ABC
 
 from langchain_core.callbacks import BaseCallbackHandler
 import streamlit as st
-
+import os
 
 class StreamHandler(BaseCallbackHandler, ABC):
     def __init__(self, container, initial_text="", display_method='markdown'):
@@ -45,3 +45,16 @@ def parse_agent_messages(msgs):
                     print(step[0].log)
             st.write(msg.content)
 
+
+def env_variables_checker():
+    # List of required env variables
+    required_vars = ["OPENAI_API_KEY", "PINECONE_API_KEY", "PINECONE_ENVIRONMENT", "INDEX_NAME"]
+    # List of missing variables using list comprehension
+    missing_vars = [var for var in required_vars if os.environ.get(var) is None]
+    # If there are any missing variables, return a string error with their names
+    if missing_vars:
+        error = "".join(missing_vars)
+        return error
+    # Otherwise, return None
+    else:
+        return None

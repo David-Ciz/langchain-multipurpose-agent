@@ -6,6 +6,14 @@ from dotenv import load_dotenv
 
 from documentation_loader import update_docs_database
 from langchain.callbacks.streaming_stdout_final_only import FinalStreamingStdOutCallbackHandler
+from langchain import hub
+from langchain.agents import initialize_agent, create_react_agent, AgentExecutor
+from langchain.agents.agent_types import AgentType
+from langchain_community.tools.ddg_search import DuckDuckGoSearchRun
+from langchain_core.tools import Tool
+from langchain_experimental.agents.agent_toolkits import create_csv_agent
+from langchain_openai import ChatOpenAI, OpenAI
+from dotenv import load_dotenv
 load_dotenv()
 logger = logging.getLogger(__name__)
 INDEX_NAME = os.environ["INDEX_NAME"]
@@ -33,15 +41,6 @@ def start_chat_cli(verbose: bool):
     """
     Starts an interactive chat with the agent in the terminal.
     """
-    from langchain import hub
-    from langchain.agents import initialize_agent, create_react_agent, AgentExecutor
-    from langchain.agents.agent_types import AgentType
-    from langchain_community.tools.ddg_search import DuckDuckGoSearchRun
-    from langchain_core.tools import Tool
-    from langchain_experimental.agents.agent_toolkits import create_csv_agent
-    from langchain_openai import ChatOpenAI, OpenAI
-    from dotenv import load_dotenv
-    load_dotenv()
 
     csv_agent = create_csv_agent(
         OpenAI(temperature=0),
