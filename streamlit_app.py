@@ -10,6 +10,7 @@ from langchain_community.vectorstores.pinecone import Pinecone
 from langchain_experimental.tools import PythonREPLTool
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
+from agents.csv_agent import CsvAgent
 from agents.orchestrator_agent import OrchestratorAgent
 from agents.output_parsers.parsers import parse_agent_messages
 from agents.vectorstore_agent import VectorStoreAgent
@@ -32,17 +33,21 @@ INDEX_NAME = os.environ["INDEX_NAME"]
 
 with st.sidebar:
     # Since the database search doesn't play nice with the other tools, I seperate it into two.
-    agent_type = st.radio("select tools", ["database_search_agent", "tool_agent"])
-    if agent_type == "tool_agent":
-        uploaded_file = st.file_uploader("You can upload files! (didn't make the csv tool in time though :( )")
-        st.markdown(css, unsafe_allow_html=True)
+    # agent_type = st.radio("select tools", ["database_search_agent", "tool_agent"])
+    # if agent_type == "tool_agent":
+    uploaded_file = st.file_uploader("You can upload files! (didn't make the csv tool in time though :( )")
+    st.markdown(css, unsafe_allow_html=True)
 
 welcome_ai_message = " Hello, I'm a helpful assistant that can answer questions from the documentation. " \
                      "I can search internet for you and execute python code!"
-
-vectorstore = Pinecone.from_existing_index(INDEX_NAME, OpenAIEmbeddings())
 llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.2, streaming=True)
+
+# documentation agent initialization
+vectorstore = Pinecone.from_existing_index(INDEX_NAME, OpenAIEmbeddings())
 documentation_agent = VectorStoreAgent(llm=llm, vectorstore=vectorstore)
+
+# csv agent initialization
+csv_agent = CsvAgent("input_files/titanic.csv", llm)
 
 # memory setup with resetting button.
 msgs = StreamlitChatMessageHistory(key="special_app_key")
