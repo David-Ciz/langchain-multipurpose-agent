@@ -1,0 +1,51 @@
+The biggest issues I have encountered:
+
+the:
+qa_chain = RetrievalQAWithSourcesChain.from_chain_type(llm, chain_type="stuff", retriever=retriever,
+                                                       return_source_documents=False,)
+
+Does not return 'sources', there seems to be a bug according to:
+
+https://github.com/langchain-ai/langchain/pull/12556
+
+It's way too deep to extract it, so either we run a modified version of langchain, wait for the pr, or just ignore it completely.
+
+Newer langchain docs about agents are trying to go around this chain and do:
+
+https://python.langchain.com/docs/modules/agents/how_to/agent_structured
+
+But here I ran into an issue where when I try to run the code, even copied line by line, I'm running into errors.
+If in the future we want to use something else than OPENAI GPT, this approach of hooking into the function calls
+of llm would just be a pain, unless we have other uses of implementing the functions in all possible llms.
+
+Another way of making it nice seemed to be an actual tool wrap around a retriever:
+
+retriever_tool = create_retriever_tool(retriever)
+
+That unfortunately returns a list. Why does it return a list??? I would expect there to be parsing to convert it into a
+dictionary or a string, so it's compatible with the agents.
+
+Anyway the main main problem is, the sources we get as a text are often ignored by the agent even when instructed numerous times.
+The failure rate is just too high, and we cannot rely on an agent with this, the sources should be returned independently. So I did return_direct=True,
+and the agent won't do the react dance when extracting stuff from the documents. Therefore I feel it's better for it to be something with llm,
+so it can reason a bit on its own for the question it gets and output a nice answer.
+Not optimal, still might consider doing it differently, because this way it's hard to extract
+context from the history of the conversation.
+
+
+Another problems:
+
+ConversationalChatAgent is supposed to be deprecated soon, with it's replacement being create_json_chat_agent.
+Not much has been converted to a json_chat_agent yet, and the recommended template "hwchase17/react-chat-json" has no actual
+react logic in it. From my testing, it's also more unstable, and with context being filled with lots of information from the vectorstores,
+it forgets it's formatting and gets stuck in a loop.
+
+So my thinking is, that it's better to use the create_react_agent and seperate the general agent from the one working
+on extracting sources.
+
+Since the streamlit is being invoked from terminal and nothing can't be passed, there isn't really a reason to create
+a start_app.py with decisions between cli and web. Unless we reaaally want to spare the user to use streamlit start command.
+
+Streaming of the output to streamlit kind of works, the thought process is streamed, but the user has to click on it and
+interpret that the Final output will be the output. It gets pasted at the end, but trying to do streaming of "final output"
+has proven to be not worth the difficulty.

@@ -44,7 +44,8 @@ def update_docs_database_cli(documentation_url: str):
 @click.option("--verbose", type=bool, default="False", help="Verbosity of chain of though")
 def start_chat_cli(verbose: bool):
     """
-    Starts an interactive chat with the agent in the terminal. To exit the chat, type "exit".
+    Starts an interactive chat with the agent in the terminal. To exit the chat, type "exit", to reset the memory
+    type "reset".
     """
 
     welcome_ai_message = " Hello, I'm a cli helpful assistant that can answer questions from the documentation. " \

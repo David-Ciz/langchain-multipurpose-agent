@@ -12,7 +12,7 @@ from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from agents.orchestrator_agent import OrchestratorAgent
 from agents.vectorstore_agent import VectorStoreAgent
 from documentation_loader import update_docs_database
-from fastapi import FastAPI, Query, Body
+from fastapi import FastAPI, Body
 from pydantic import BaseModel
 
 from utils import env_variables_checker

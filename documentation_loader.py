@@ -46,7 +46,7 @@ def simple_extractor(html: str) -> str:
 
 
 @cli.command("update")
-@click.option("--url", type=bool, default="https://ibm.github.io/ibm-generative-ai/",
+@click.option("--url", type=str, default="https://ibm.github.io/ibm-generative-ai/",
               help="Url to try and recursively add to the pinecone database")
 def update_docs_database(url: str = "https://ibm.github.io/ibm-generative-ai/"):
     """
@@ -110,7 +110,7 @@ def update_docs_database(url: str = "https://ibm.github.io/ibm-generative-ai/"):
     while not pc.describe_index(INDEX_NAME).status['ready']:
         time.sleep(1)
 
-    logger.info(f"Pinecode index created with the following stats: {pc.describe_index()} ")
+    logger.info(f"Pinecode index created with the following stats: {pc.describe_index(INDEX_NAME)} ")
     logger.info("Upserting documents")
     try:
         PineconeLangchain.from_documents(docs_transformed, embeddings, index_name=INDEX_NAME)
