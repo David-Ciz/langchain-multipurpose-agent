@@ -10,12 +10,13 @@ from langchain_community.vectorstores.pinecone import Pinecone
 from langchain_experimental.tools import PythonREPLTool
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
+import config
 from agents.csv_agent import CsvAgent
 from agents.orchestrator_agent import OrchestratorAgent
 from agents.output_parsers.parsers import parse_agent_messages
 from agents.vectorstore_agent import VectorStoreAgent
+from config import TEMPERATURE
 from styles import css
-from utils import env_variables_checker
 
 # env setup, make sure you have a .env file under root with
 # OPENAI_API_KEY
@@ -23,8 +24,8 @@ from utils import env_variables_checker
 # PINECONE_ENVIRONMENT
 # INDEX_NAME
 
-load_dotenv()
-missing_variables = env_variables_checker()
+logger = logging.getLogger("Assistant")
+missing_variables = config.load_env()
 if missing_variables:
     st.warning(f'warning, you are missing the following env. variables: {missing_variables}', icon="⚠️")
 
@@ -40,7 +41,7 @@ with st.sidebar:
 
 welcome_ai_message = " Hello, I'm a helpful assistant that can answer questions from the documentation. " \
                      "I can search internet for you and execute python code!"
-llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.2, streaming=True)
+llm = ChatOpenAI(model_name=config.MODEL_NAME, temperature=TEMPERATURE, streaming=True)
 
 # documentation agent initialization
 vectorstore = Pinecone.from_existing_index(INDEX_NAME, OpenAIEmbeddings())
@@ -74,10 +75,9 @@ if prompt := st.chat_input():
         # try:
         container = st.container()
         try:
-            orchestrator_agent.get_streamlit_response(container, msgs, prompt)
+            orchestrator_agent.invoke_streamlit_response(container, msgs, prompt)
         except Exception as e:
             # Very basic exception handling, mostly here so that the user doesn't get some ugly response.
-            container = st.container()
             # TODO: Maybe add something here to disable the chat_box? details, and solutions are ugly.
             logger.error(f"An error occurred while generating answer: {e}")
             container.write("Something went wrong, please try rerunning the program and look at "

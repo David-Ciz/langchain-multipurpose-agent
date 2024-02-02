@@ -6,6 +6,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain_community.vectorstores.pinecone import Pinecone
 from langchain_experimental.tools import PythonREPLTool
 
+import config
 from agents.orchestrator_agent import OrchestratorAgent
 from agents.vectorstore_agent import VectorStoreAgent
 from documentation_loader import update_docs_database
@@ -14,12 +15,11 @@ from langchain_openai import ChatOpenAI,  OpenAIEmbeddings
 from dotenv import load_dotenv
 
 from utils import env_variables_checker
+from config import MODEL_NAME, TEMPERATURE, INDEX_NAME
 
-load_dotenv()
+
 logger = logging.getLogger("Assistant")
-INDEX_NAME = os.environ["INDEX_NAME"]
-
-missing_variables = env_variables_checker()
+missing_variables = config.load_env()
 if missing_variables:
     logging.warning(f'warning, you are missing the following env. variables: {missing_variables}')
 
@@ -52,7 +52,7 @@ def start_chat_cli(verbose: bool):
                          "I can search internet for you and execute python code!"
 
     vectorstore = Pinecone.from_existing_index(INDEX_NAME, OpenAIEmbeddings())
-    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.2, streaming=True)
+    llm = ChatOpenAI(model_name=MODEL_NAME, temperature=TEMPERATURE, streaming=True)
     documentation_agent = VectorStoreAgent(llm=llm, vectorstore=vectorstore)
     # memory setup with resetting button.
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True,

@@ -36,7 +36,7 @@ AI: """  # Initialize the template attribute
         """
         llm_response = self.qa_chain.invoke(prompt)  # Invoke the qa_chain with the question
         result = process_source_metadata(llm_response)  # Process the source metadata
-        return result  # Return the result
+        return result
 
     def as_tool(self) -> Tool:
         tool = Tool(

@@ -2,13 +2,14 @@ import logging
 import os
 
 import uvicorn
-from dotenv import load_dotenv
+
 from langchain.memory import ConversationBufferMemory
 from langchain_community.tools.ddg_search import DuckDuckGoSearchRun
 from langchain_community.vectorstores.pinecone import Pinecone
 from langchain_experimental.tools import PythonREPLTool
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 
+import config
 from agents.orchestrator_agent import OrchestratorAgent
 from agents.vectorstore_agent import VectorStoreAgent
 from documentation_loader import update_docs_database
@@ -16,19 +17,17 @@ from fastapi import FastAPI, Body
 from pydantic import BaseModel
 
 from utils import env_variables_checker
+from config import MODEL_NAME, TEMPERATURE, INDEX_NAME
 
 app = FastAPI()
-load_dotenv()
+missing_variables = config.load_env()
 logger = logging.getLogger("Assistant")
-INDEX_NAME = os.environ["INDEX_NAME"]
 
-missing_variables = env_variables_checker()
 if missing_variables:
     logging.warning(f'warning, you are missing the following env. variables: {missing_variables}')
 
-
 vectorstore = Pinecone.from_existing_index(INDEX_NAME, OpenAIEmbeddings())
-llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.2, streaming=True)
+llm = ChatOpenAI(model_name=MODEL_NAME, temperature=TEMPERATURE, streaming=True)
 documentation_agent = VectorStoreAgent(llm=llm, vectorstore=vectorstore)
 # memory setup with resetting button.
 memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True,
@@ -36,7 +35,6 @@ memory = ConversationBufferMemory(memory_key="chat_history", return_messages=Tru
 
 tools = [DuckDuckGoSearchRun(name="Search"), PythonREPLTool(), documentation_agent.as_tool()]
 orchestrator_agent = OrchestratorAgent(tools, llm, memory, return_intermediate_steps=True)
-
 
 
 class Prompt(BaseModel):

@@ -8,8 +8,8 @@ def env_variables_checker() -> str | None:
     missing_vars = [var for var in required_vars if os.environ.get(var) is None]
     # If there are any missing variables, return a string error with their names
     if missing_vars:
-        error = "".join(missing_vars)
-        return error
+        warning = "".join(missing_vars)
+        return warning
     # Otherwise, return None
     else:
         return None
