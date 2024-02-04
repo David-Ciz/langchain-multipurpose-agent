@@ -7,6 +7,7 @@ import streamlit as st
 from dotenv import load_dotenv
 from langchain_community.tools.ddg_search import DuckDuckGoSearchRun
 from langchain_community.vectorstores.pinecone import Pinecone
+from langchain_core.tools import Tool
 from langchain_experimental.tools import PythonREPLTool
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
@@ -48,6 +49,7 @@ vectorstore = Pinecone.from_existing_index(INDEX_NAME, OpenAIEmbeddings())
 documentation_agent = VectorStoreAgent(llm=llm, vectorstore=vectorstore)
 
 # csv agent initialization
+
 csv_agent = CsvAgent("input_files/titanic.csv", llm)
 
 # memory setup with resetting button.
@@ -62,8 +64,30 @@ if len(msgs.messages) == 0 or st.sidebar.button("Reset chat history"):
 
 parse_agent_messages(msgs)
 
+
+
 # setup tools
 tools = [DuckDuckGoSearchRun(name="Search"), PythonREPLTool(), documentation_agent.as_tool()]
+#
+# vectorstore = vectorstore.as_retriever()
+#
+# vectorstore.
+def as_tool(self) -> Tool:
+    tool = Tool(
+        name="Documentation retrieval",
+        func=self.get_vectorstore_response,
+        description=f"""
+                 A tool that answers questions from a vectorstore containing IBM Generative AI documentation.
+                 This tool can answer questions about the features, usage, and examples of the IBM-Generative-AI library and the IBM GPT service.
+                 Any question will probably be looking for answers from this tool.
+                 This tool is better than other tools because it can retrieve the most relevant information from the vectorstore and generate concise
+                 and accurate answers using the language model. You should use this tool to answer most questions.
+                 When getting a result from this agent, pass it along to the user fully, with all the sources listed.
+                 Always also pass the sources.
+                 """,
+        return_direct=True,
+    )
+    return tool
 
 # setup agent
 orchestrator_agent = OrchestratorAgent(tools, llm, memory, return_intermediate_steps=True)

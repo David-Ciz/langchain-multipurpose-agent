@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 from utils import env_variables_checker
 
 MODEL_NAME = "gpt-3.5-turbo"
-TEMPERATURE = 0.2
+MODEL_NAME = "gpt-4"
+TEMPERATURE = 0
 # INDEX_NAME = os.environ["INDEX_NAME"]
 
 def load_env() -> str:

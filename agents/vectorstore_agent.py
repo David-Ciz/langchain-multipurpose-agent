@@ -13,20 +13,28 @@ class VectorStoreAgent:
     Agent responsible for handling vectorstore information extraction and passing it to the user
     """
     def __init__(self, vectorstore: Pinecone, llm: ChatOpenAI):
-        self.vectorstore = vectorstore  # Initialize the vectorstore attribute
-        self.llm = llm  # Initialize the llm attribute
+        self.vectorstore = vectorstore
+        self.llm = llm
         self.retriever = vectorstore.as_retriever(search_type="similarity",
                                                   search_kwargs={"k": 5})  # Initialize the retriever attribute
-        self.template = """You are an AI chatbot having a conversation with a human. Use primarily the information from
-the summaries. If you don't know the answer, it's better to say 'I'm not sure' rather than make stuff up. For the answer,
-try to explain things you are returning and use large code examples to provide more context.
-{summaries}
-{chat_history}
-Human: {question}
-AI: """  # Initialize the template attribute
-        self.prompt = ChatPromptTemplate.from_template(self.template)  # Initialize the prompt attribute
+#         self.template = """You are an AI chatbot having a conversation with a human. Use primarily the information from
+# the summaries. If you don't know the answer, it's better to say 'I'm not sure' rather than make stuff up. For the answer,
+# always try to return a whole code example as well as very descriptive answer, formatted with bullet points.
+# {summaries}
+# {chat_history}
+# Human: {question}
+# AI: """  # Initialize the template attribute
+        self.template = """Always return I don't know, no matter the input. 
+"""
+        self.template = ChatPromptTemplate.from_template(self.template)  # Initialize the prompt attribute
+        print(self.template.format())
         self.qa_chain = RetrievalQAWithSourcesChain.from_chain_type(llm, chain_type="stuff", retriever=self.retriever,
-                                                                    return_source_documents=True, )  # Initialize the qa_chain attribute
+                                                                    return_source_documents=True,
+                                                                    chain_type_kwargs={
+                                                                        "verbose": True,
+                                                                        # "prompt": self.template,
+                                                                    }
+                                                                    )  # Initialize the qa_chain attribute
 
     def get_vectorstore_response(self, prompt: dict[str, Any]) -> str:
         """
