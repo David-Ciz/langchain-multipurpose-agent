@@ -40,14 +40,14 @@ with st.sidebar:
 
 welcome_ai_message = " Hello, I'm a helpful assistant that can answer questions from the documentation. " \
                      "I can search internet for you and execute python code!"
-llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.2, streaming=True)
+llm = ChatOpenAI(model_name="gpt-4", temperature=0.0, streaming=True)
 
 # documentation agent initialization
 vectorstore = Pinecone.from_existing_index(INDEX_NAME, OpenAIEmbeddings())
 documentation_agent = VectorStoreAgent(llm=llm, vectorstore=vectorstore)
 
 # csv agent initialization
-csv_agent = CsvAgent("input_files/titanic.csv", llm)
+#csv_agent = CsvAgent("input_files/titanic.csv", llm)
 
 # memory setup with resetting button.
 msgs = StreamlitChatMessageHistory(key="special_app_key")
