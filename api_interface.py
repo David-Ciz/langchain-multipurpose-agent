@@ -10,8 +10,8 @@ from langchain_experimental.tools import PythonREPLTool
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 
 import config
-from agents.orchestrator_agent import OrchestratorAgent
-from agents.vectorstore_agent import VectorStoreAgent
+from agent_setup import setup_agents_and_tools
+from agents.utils import get_api_response
 from documentation_loader import update_docs_database
 from fastapi import FastAPI, Body
 from pydantic import BaseModel
@@ -26,16 +26,10 @@ logger = logging.getLogger("Assistant")
 if missing_variables:
     logging.warning(f'warning, you are missing the following env. variables: {missing_variables}')
 
-vectorstore = Pinecone.from_existing_index(INDEX_NAME, OpenAIEmbeddings())
-llm = ChatOpenAI(model_name=MODEL_NAME, temperature=TEMPERATURE, streaming=True)
-documentation_agent = VectorStoreAgent(llm=llm, vectorstore=vectorstore)
 # memory setup with resetting button.
 memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True,
                                   output_key="output")
-
-tools = [DuckDuckGoSearchRun(name="Search"), PythonREPLTool(), documentation_agent.as_tool()]
-orchestrator_agent = OrchestratorAgent(tools, llm, memory, return_intermediate_steps=True)
-
+orchestrator_agent = setup_agents_and_tools(memory)
 
 class Prompt(BaseModel):
     text: str
@@ -65,7 +59,7 @@ async def chat_api(prompt: Prompt = Body(...)):
     :return:
     """
 
-    response = orchestrator_agent.get_api_response(prompt.text)
+    response = get_api_response(orchestrator_agent, prompt)
     return response
 
 

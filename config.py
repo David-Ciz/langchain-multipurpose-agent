@@ -7,7 +7,7 @@ from utils import env_variables_checker
 MODEL_NAME = "gpt-3.5-turbo"
 MODEL_NAME = "gpt-4"
 TEMPERATURE = 0
-# INDEX_NAME = os.environ["INDEX_NAME"]
+INDEX_NAME = "documentation-chat"
 
 def load_env() -> str:
     load_dotenv()
