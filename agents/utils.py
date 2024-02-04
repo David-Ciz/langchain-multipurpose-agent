@@ -56,6 +56,7 @@ def get_api_response(executor: AgentExecutor, prompt: str) -> dict[str, Any]:
     result = executor.invoke({"input": prompt, "chat_history": []})
     return result
 
+
 def get_csv_response(csv_agent, prompt: dict[str, Any]) -> str:
     """
     Outputs a structured response with sources for a csv agent
@@ -63,7 +64,7 @@ def get_csv_response(csv_agent, prompt: dict[str, Any]) -> str:
     :return:
     """
     llm_response = csv_agent.invoke(prompt)
-    return llm_response["result"]
+    return llm_response
 
 
 def agent_as_tool(agent, invocation_function, description, ) -> Tool:

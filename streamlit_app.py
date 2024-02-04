@@ -1,4 +1,5 @@
 import logging
+import os
 
 from langchain.memory import ConversationBufferMemory
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
@@ -23,7 +24,12 @@ if missing_variables:
 
 logger = logging.getLogger(__name__)
 with st.sidebar:
-    uploaded_file = st.file_uploader("You can upload files! (didn't make the csv tool in time though :( )")
+    uploaded_file = st.file_uploader("You can upload files! currently only works with csv files)", type="csv")
+    if uploaded_file:
+        with open(config.UPLOAD_DATA_PATH, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        st.success("Saved File")
+
     st.markdown(css, unsafe_allow_html=True)
 
 welcome_ai_message = " Hello, I'm a helpful assistant that can answer questions from the documentation. " \
